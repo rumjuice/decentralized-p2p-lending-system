@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-project",
+  "name": "p2p-lending",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.1",
