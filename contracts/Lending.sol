@@ -1,10 +1,19 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+error NotRegisteredOwner();
+error NotRegisteredBorrower();
+error DepositCannotBeZero();
+error NotEnoughFunds();
+error NoFundsInDeposit();
+error BurnAddressProhibited();
+
 contract Lending {
     //#region State variables
     mapping(address => bool) private owners;
     mapping(address => uint256) private deposits;
+    mapping(address => bool) private borrowers;
+
 
     //#region
 
@@ -14,36 +23,73 @@ contract Lending {
         owners[address(uint160(bytes20("0x1")))] = true;
         owners[address(uint160(bytes20("0x2")))] = true;
         owners[address(uint160(bytes20("0x3")))] = true;
-        owners[address(uint160(bytes20("0x4")))] = true;
+        owners[msg.sender]=true;
     }
 
     //#region Modifiers
     modifier onlyOwners() {
-        require(owners[msg.sender], "Only for owners!");
+        if(!owners[msg.sender])
+            revert NotRegisteredOwner();
+        _;
+    }
+
+    modifier onlyBorrowers() {
+        if(!borrowers[msg.sender])
+            revert NotRegisteredBorrower();
+        _;
+    }
+
+    modifier isValidAmountSent() {
+        if(msg.value <= 0)
+            revert DepositCannotBeZero();
+        _;
+    }
+
+    modifier hasEnoughBalance() {
+        if(msg.sender.balance < msg.value)
+            revert NotEnoughFunds();
+        _;
+    }
+
+    modifier isValidAddress(address addr) {
+        if(addr == 0x0000000000000000000000000000000000000000)
+            revert BurnAddressProhibited();
+        _;
+    }
+
+    modifier hasNotZeroDepositBalance() {
+        if(deposits[msg.sender] <= 0)
+            revert NoFundsInDeposit();
         _;
     }
 
     //#region
 
     // we use external to save gas because we know this function can only be called externally
-    function depositMoney() external payable {
-        require(msg.value > 0, "Deposit must be greater than 0!");
-        require(msg.sender.balance >= msg.value, "Not enough funds!");
-
+    function depositMoney() external payable onlyBorrowers isValidAmountSent hasEnoughBalance {
         deposits[msg.sender] += msg.value;
     }
 
-    function getDepositBalance() external view returns (uint256) {
+    function getDepositBalance() external view onlyBorrowers returns (uint256) {
         return deposits[msg.sender];
     }
 
-    function withdrawDeposit() external payable {
-        require(deposits[msg.sender] > 0, "You don't have any deposit!");
-
+    function withdrawDeposit() external payable onlyBorrowers hasNotZeroDepositBalance {
         uint256 _amount = deposits[msg.sender];
         deposits[msg.sender] = 0;
 
         (bool sent, ) = msg.sender.call{value: _amount}("");
         require(sent, "Failed to withdraw");
+    }
+
+
+    //owners should register borrowers
+    function registerBorrower(address newBorrower) external onlyOwners isValidAddress(newBorrower) {
+        borrowers[newBorrower] = true;
+    }
+
+    //owners should unregister not needed borrowers
+    function unregisterBorrower(address removedBorrower) external onlyOwners isValidAddress(removedBorrower) {
+        borrowers[removedBorrower] = false;
     }
 }
