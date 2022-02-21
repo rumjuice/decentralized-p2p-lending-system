@@ -27,7 +27,7 @@ George Brown College - Blockchain Development
 
 - Jainam: [LinkedIn](https://www.linkedin.com/in/jainmshah/) [GitHub](https://github.com/naxer-12)
 
-- Hossein: [LinkedIn](https://www.linkedin.com/in/hossein-hesami-ccnsp-ceh-5a565b78/) [GitHub](https://github.com/DarioHesami)
+- Hossein: [LinkedIn](www.linkedin.com/in/hossein-hesami-5a565b78/) [GitHub](https://github.com/DarioHesami)
 
 - Ramdhani: [LinkedIn](https://www.linkedin.com/in/ramdhaniharis/) [GitHub](https://github.com/rumjuice)
 
