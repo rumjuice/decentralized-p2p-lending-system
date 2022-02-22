@@ -5,6 +5,7 @@ import "./Utils.sol";
 
 error NotRegisteredOwner();
 error NotRegisteredBorrower();
+error NotRegisteredLender();
 error DepositCannotBeZero();
 error NotEnoughFunds();
 error NoFundsInDeposit();
@@ -37,6 +38,8 @@ contract Lending {
     LoanRequest[] public loanRequests;
     // mapping of borrower address to loan request index
     mapping(address => uint256) public borrowerLoanRequest;
+    mapping(address => uint256) private lendersInvestment;
+    mapping(address => bool) private lenders;
 
     mapping(address => bool) private mutex;
 
@@ -64,6 +67,11 @@ contract Lending {
 
     modifier onlyBorrowers() {
         if (!borrowers[msg.sender]) revert NotRegisteredBorrower();
+        _;
+    }
+
+    modifier onlyLenders() {
+        if (!lenders[msg.sender]) revert NotRegisteredLender();
         _;
     }
 
@@ -194,5 +202,28 @@ contract Lending {
         require(_index > 0, "You have no active loan");
 
         return Utils.getStatus(uint8(loanRequests[_index].status));
+    }
+
+    //get smart contract balance
+    function balanceOfContract() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    //owners should register lenders
+    function registerLender(address newLender)
+        external
+        onlyOwners
+        isValidAddress(newLender)
+    {
+        lenders[newLender] = true;
+    }
+
+    //owners should unregister lender
+    function unregisterLender(address removedLender)
+        external
+        onlyOwners
+        isValidAddress(removedLender)
+    {
+        borrowers[removedLender] = false;
     }
 }
