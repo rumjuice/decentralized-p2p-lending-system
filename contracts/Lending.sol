@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 error NotRegisteredOwner();
 error NotRegisteredBorrower();
+error NotRegisteredLender();
 error DepositCannotBeZero();
 error NotEnoughFunds();
 error NoFundsInDeposit();
@@ -13,11 +14,14 @@ contract Lending {
     mapping(address => bool) private owners;
     mapping(address => uint256) private deposits;
     mapping(address => bool) private borrowers;
+    mapping(address => uint256) private lendersInvestment;
+    mapping(address => bool) private lenders;
+
 
 
     //#region
 
-    constructor() {
+    constructor() { 
         // TODO this should be replaced with our address
         // so that we're added as the contract owners (TBD)
         owners[address(uint160(bytes20("0x1")))] = true;
@@ -36,6 +40,12 @@ contract Lending {
     modifier onlyBorrowers() {
         if(!borrowers[msg.sender])
             revert NotRegisteredBorrower();
+        _;
+    }
+
+    modifier onlyLenders() {
+        if(!lenders[msg.sender])
+            revert NotRegisteredLender();
         _;
     }
 
@@ -92,4 +102,21 @@ contract Lending {
     function unregisterBorrower(address removedBorrower) external onlyOwners isValidAddress(removedBorrower) {
         borrowers[removedBorrower] = false;
     }
+
+    //get smart contract balance
+    function balanceOfContract() external view returns(uint){
+        
+        return address(this).balance;
+    }
+
+    //owners should register lenders
+    function registerLender(address newLender) external onlyOwners isValidAddress(newLender) {
+        lenders[newLender] = true;
+    }
+
+    //owners should unregister lender
+    function unregisterLender(address removedLender) external onlyOwners isValidAddress(removedLender) {
+        borrowers[removedLender] = false;
+    }
+
 }
