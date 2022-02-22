@@ -205,25 +205,25 @@ contract Lending {
     }
 
     //get smart contract balance
-    function balanceOfContract() external view returns (uint256) {
+    function balanceOfContract() external view onlyOwners returns (uint256) {
         return address(this).balance;
     }
 
     //owners should register lenders
-    function registerLender(address newLender)
+    function registerLender(address _newLender)
         external
         onlyOwners
-        isValidAddress(newLender)
+        isValidAddress(_newLender)
     {
-        lenders[newLender] = true;
+        lenders[_newLender] = true;
     }
 
     //owners should unregister lender
-    function unregisterLender(address removedLender)
+    function unregisterLender(address _removeLender)
         external
         onlyOwners
-        isValidAddress(removedLender)
+        isValidAddress(_removeLender)
     {
-        borrowers[removedLender] = false;
+        borrowers[_removeLender] = false;
     }
 }
