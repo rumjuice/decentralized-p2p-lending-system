@@ -226,4 +226,20 @@ contract Lending {
     {
         borrowers[_removeLender] = false;
     }
+
+
+    //take transaction fee which is 1% borrowed amount
+    //whenever a borrower pays back debt, his address and amount needs to be passed to this method
+    function takeProcessingFee(address _borrower, uint256 _borrowedAmount)
+        internal
+    {
+        uint256 borrowerDeposit = deposits[_borrower];
+        uint256 fee = Utils.percentage(_borrowedAmount, 1);
+        if(fee>borrowerDeposit){
+            deposits[_borrower]=0;
+        }
+        else{
+            deposits[_borrower]=borrowerDeposit-fee;
+        }
+    }
 }
