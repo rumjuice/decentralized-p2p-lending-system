@@ -35,9 +35,9 @@ contract Lending {
     // registered borrower address
     mapping(address => bool) private borrowers;
     // list of loan request
-    LoanRequest[] public loanRequests;
+    LoanRequest[] private loanRequests;
     // mapping of borrower address to loan request index
-    mapping(address => uint256) public borrowerLoanRequest;
+    mapping(address => uint256) private borrowerLoanRequest;
     mapping(address => uint256) private lendersInvestment;
     mapping(address => bool) private lenders;
 
