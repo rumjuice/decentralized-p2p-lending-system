@@ -55,7 +55,7 @@ contract Lending {
         owners[address(uint160(bytes20("0x2")))] = true;
         owners[address(uint160(bytes20("0x3")))] = true;
         owners[msg.sender] = true;
-        // default interestRate rate
+        // default interestRate
         interestRate = 10;
         // put dummy loan request for index 0
         // because in borrowerLoanRequest mapping, it will return 0 if address not found
@@ -74,12 +74,14 @@ contract Lending {
     }
 
     modifier notBorrowers() {
-        if (!(owners[msg.sender] || lenders[msg.sender])) revert OnlyOwnersAndBorrowersCanAccess();
+        if (!(owners[msg.sender] || lenders[msg.sender]))
+            revert OnlyOwnersAndBorrowersCanAccess();
         _;
     }
 
     modifier notLenders() {
-        if (!(owners[msg.sender] || borrowers[msg.sender])) revert OnlyOwnersAndLendersCanAccess();
+        if (!(owners[msg.sender] || borrowers[msg.sender]))
+            revert OnlyOwnersAndLendersCanAccess();
         _;
     }
 
@@ -123,10 +125,9 @@ contract Lending {
     }
 
     modifier isValidIntererstRate(uint8 _interestRate) {
-        if (_interestRate>100) revert InvalidInterestRate();
+        if (_interestRate > 100) revert InvalidInterestRate();
         _;
     }
-
 
     //#region
 
@@ -210,7 +211,6 @@ contract Lending {
         notLenders
         returns (string memory)
     {
-        
         uint256 _index = borrowerLoanRequest[_borrower];
         require(_index > 0, "You have no active loan");
 
@@ -240,19 +240,31 @@ contract Lending {
         borrowers[_removeLender] = false;
     }
 
+    //take transaction fee which is 1% borrowed amount
+    //whenever a borrower pays back debt, his address and amount needs to be passed to this method
+    function takeProcessingFee(address _borrower, uint256 _borrowedAmount)
+        internal
+    {
+        uint256 borrowerDeposit = deposits[_borrower];
+        uint256 fee = Utils.percentage(_borrowedAmount, 1);
+        if (fee > borrowerDeposit) {
+            deposits[_borrower] = 0;
+        } else {
+            deposits[_borrower] = borrowerDeposit - fee;
+        }
+    }
 
     //owners and lenders can access the loanRequests list
     function getLoanList()
         external
-        notBorrowers 
         view
-        returns  (LoanRequest[] memory)
+        notBorrowers
+        returns (LoanRequest[] memory)
     {
         return loanRequests;
     }
-    
-    
-    //owners should unregister lender
+
+    //owners can set interest rate
     function setInterestRate(uint8 _interestRate)
         external
         isValidIntererstRate(_interestRate)
@@ -260,5 +272,4 @@ contract Lending {
     {
         interestRate = _interestRate;
     }
-
 }
