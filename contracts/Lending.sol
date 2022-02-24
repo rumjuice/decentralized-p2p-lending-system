@@ -11,10 +11,13 @@ error NotEnoughFunds();
 error NoFundsInDeposit();
 error BurnAddressProhibited();
 error HasActiveLoan();
+error OnlyOwnersAndBorrowersCanAccess();
+error InvalidInterestRate();
+error OnlyOwnersAndLendersCanAccess();
 
 contract Lending {
     //#region State variables
-    uint8 public interest;
+    uint8 public interestRate;
     enum LoanStatus {
         NEW,
         ON_LOAN,
@@ -23,7 +26,7 @@ contract Lending {
     struct LoanRequest {
         address lender;
         uint256 amount;
-        uint8 interest;
+        uint8 interestRate;
         uint8 creditScore;
         LoanStatus status;
     }
@@ -35,9 +38,9 @@ contract Lending {
     // registered borrower address
     mapping(address => bool) private borrowers;
     // list of loan request
-    LoanRequest[] public loanRequests;
+    LoanRequest[] private loanRequests;
     // mapping of borrower address to loan request index
-    mapping(address => uint256) public borrowerLoanRequest;
+    mapping(address => uint256) private borrowerLoanRequest;
     mapping(address => uint256) private lendersInvestment;
     mapping(address => bool) private lenders;
 
@@ -52,8 +55,8 @@ contract Lending {
         owners[address(uint160(bytes20("0x2")))] = true;
         owners[address(uint160(bytes20("0x3")))] = true;
         owners[msg.sender] = true;
-        // default interest rate
-        interest = 10;
+        // default interestRate
+        interestRate = 10;
         // put dummy loan request for index 0
         // because in borrowerLoanRequest mapping, it will return 0 if address not found
         loanRequests.push(LoanRequest(address(0), 0, 0, 0, LoanStatus.NEW));
@@ -67,6 +70,18 @@ contract Lending {
 
     modifier onlyBorrowers() {
         if (!borrowers[msg.sender]) revert NotRegisteredBorrower();
+        _;
+    }
+
+    modifier notBorrowers() {
+        if (!(owners[msg.sender] || lenders[msg.sender]))
+            revert OnlyOwnersAndBorrowersCanAccess();
+        _;
+    }
+
+    modifier notLenders() {
+        if (!(owners[msg.sender] || borrowers[msg.sender]))
+            revert OnlyOwnersAndLendersCanAccess();
         _;
     }
 
@@ -109,6 +124,11 @@ contract Lending {
         mutex[msg.sender] = false;
     }
 
+    modifier isValidIntererstRate(uint8 _interestRate) {
+        if (_interestRate > 100) revert InvalidInterestRate();
+        _;
+    }
+
     //#region
 
     // we use external to save gas because we know these functions can only be called externally
@@ -148,7 +168,6 @@ contract Lending {
 
     function withdrawDeposit()
         external
-        payable
         onlyBorrowers
         hasNotZeroDepositBalance
         hasNoActiveLoan
@@ -175,7 +194,7 @@ contract Lending {
             LoanRequest({
                 lender: address(0),
                 amount: deposits[msg.sender] * 2,
-                interest: interest,
+                interestRate: interestRate,
                 creditScore: 1,
                 status: LoanStatus.NEW
             })
@@ -189,15 +208,9 @@ contract Lending {
     function getLoanStatus(address _borrower)
         external
         view
+        notLenders
         returns (string memory)
     {
-        // TODO merge this into one modifier and add only lenders
-        // I think we need to refactor the modifiers
-        require(
-            owners[msg.sender] || borrowers[msg.sender],
-            "Only owners or borrowers"
-        );
-
         uint256 _index = borrowerLoanRequest[_borrower];
         require(_index > 0, "You have no active loan");
 
@@ -227,7 +240,6 @@ contract Lending {
         borrowers[_removeLender] = false;
     }
 
-
     //take transaction fee which is 1% borrowed amount
     //whenever a borrower pays back debt, his address and amount needs to be passed to this method
     function takeProcessingFee(address _borrower, uint256 _borrowedAmount)
@@ -235,11 +247,29 @@ contract Lending {
     {
         uint256 borrowerDeposit = deposits[_borrower];
         uint256 fee = Utils.percentage(_borrowedAmount, 1);
-        if(fee>borrowerDeposit){
-            deposits[_borrower]=0;
+        if (fee > borrowerDeposit) {
+            deposits[_borrower] = 0;
+        } else {
+            deposits[_borrower] = borrowerDeposit - fee;
         }
-        else{
-            deposits[_borrower]=borrowerDeposit-fee;
-        }
+    }
+
+    //owners and lenders can access the loanRequests list
+    function getLoanList()
+        external
+        view
+        notBorrowers
+        returns (LoanRequest[] memory)
+    {
+        return loanRequests;
+    }
+
+    //owners can set interest rate
+    function setInterestRate(uint8 _interestRate)
+        external
+        isValidIntererstRate(_interestRate)
+        onlyOwners
+    {
+        interestRate = _interestRate;
     }
 }

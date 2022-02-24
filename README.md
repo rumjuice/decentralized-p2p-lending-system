@@ -90,9 +90,13 @@ TODO
 
 TODO
 
-### Diagrams
+### System Diagram
 
-TODO
+![](./assets/system-diagram.jpg)
+
+### Flow Diagram
+
+![](./assets/flow-diagram.jpg)
 
 ### Tech-stack
 
