@@ -50,15 +50,17 @@ contract Lending {
 
     constructor() {
         // TODO this should be replaced with our address
-        // so that we're added as the contract owners (TBD)
-        owners[address(uint160(bytes20("0x1")))] = true;
+        // so that we're added as the contract owners
+        // Ramdhani address
+        owners[address(0x9321ef8Ccf26Ca4d64F7213076B3BAb0F6253E96)] = true;
         owners[address(uint160(bytes20("0x2")))] = true;
         owners[address(uint160(bytes20("0x3")))] = true;
+        // TODO remove this when we're finished
         owners[msg.sender] = true;
         // default interestRate
         interestRate = 10;
         // put dummy loan request for index 0
-        // because in borrowerLoanRequest mapping, it will return 0 if address not found
+        // because in borrowerLoanRequest mapping, it will return 0 if the address is not found
         loanRequests.push(LoanRequest(address(0), 0, 0, 0, LoanStatus.NEW));
     }
 
