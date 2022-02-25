@@ -49,16 +49,22 @@ contract Lending {
     //#region
 
     constructor() {
-        // TODO this should be replaced with our address
-        // so that we're added as the contract owners (TBD)
-        owners[address(uint160(bytes20("0x1")))] = true;
-        owners[address(uint160(bytes20("0x2")))] = true;
-        owners[address(uint160(bytes20("0x3")))] = true;
+        // Owners contract address
+        // Ramdhani address
+        owners[address(0x9321ef8Ccf26Ca4d64F7213076B3BAb0F6253E96)] = true;
+        // Jainam address
+        owners[address(0xffDdE6391761A8d27E1579a094bCC55C6C4799E9)] = true;
+        // Hossein address
+        owners[address(0xf859ECf4Ea6322F706F908aAA76702c3CA7faEbB)] = true;
+        // Ravshan address
+        owners[address(0x42Bd936410fE89CFfB8cbb3934A6FD3D6F76cB2a)] = true;
+
+        // TODO remove this when we're finished
         owners[msg.sender] = true;
         // default interestRate
         interestRate = 10;
         // put dummy loan request for index 0
-        // because in borrowerLoanRequest mapping, it will return 0 if address not found
+        // because in borrowerLoanRequest mapping, it will return 0 if the address is not found
         loanRequests.push(LoanRequest(address(0), 0, 0, 0, LoanStatus.NEW));
     }
 

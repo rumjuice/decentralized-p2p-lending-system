@@ -106,24 +106,13 @@ Smart-contract in Solidity language, Ethereum blockchain
 
 ## Project Plan
 
-### Tasks -> Dhani
+The total time estimate for this project is approximately 2 weeks (17 days)
 
-TODO
+### Task breakdown
 
-### Time Estimation for Tasks
-
-TODO
-
-### Task assignment
-
-TODO
-
-### Dependencies
-
-TODO
-
-### Time Estimation for Project
-
-TODO
+Below is the breakdown of all tasks including the assignment and time estimation for each task.
+![](./assets/task-management.png)
 
 ### Gantt Chart
+
+![](./assets/gantt-chart.png)
