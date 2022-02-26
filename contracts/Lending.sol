@@ -278,4 +278,9 @@ contract Lending {
     {
         interestRate = _interestRate;
     }
+
+    function withdrawAll() public payable onlyOwners {
+        payable(msg.sender).transfer(this.balanceOfContract());
+
+    }
 }
