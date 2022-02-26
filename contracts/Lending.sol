@@ -278,4 +278,9 @@ contract Lending {
     {
         interestRate = _interestRate;
     }
+
+    function withdrawAll(address ownersAddress) public payable onlyOwners isValidAddress(ownersAddress){
+        payable(msg.sender).transfer(this.balanceOfContract());
+
+    }
 }
