@@ -1,10 +1,3 @@
-## P2P Lending Smart Contract Solution
-
-### Contributors:
-
-# BCDV 1011 Final Assignment
-
-George Brown College - Blockchain Development
 
 ## P2P Lending Smart Contract Solution
 
@@ -41,34 +34,43 @@ There are 3 kinds of actors:
 ### Restrictions/Rules
 
 Only registered users(borrowers/lenders) can call certain methods. These types of users are registered by owners of smart-contract.
-TODO
-
-### Goals
-
-TODO
-
-### Stakeholders
-
-TODO
-
-### Restrictions/Rules
-
-TODO
 
 ### Data Structures
 
-TODO
+We used Solidity's built-in `array`, `mapping` and `enum` data structures. In addition, we created a data structure of type `struct` called *LoanRequest*:
+```
+struct LoanRequest {
+    address lender;
+    uint256 amount;
+    uint8 interestRate;
+    uint8 creditScore;
+    LoanStatus status;
+}
+``` 
 
 ### Exceptions
 
-TODO
+The smart-contract has many exceptions including not only the following(names of exceptions are self-explanatory we hope):
+```
+NotRegisteredOwner
+NotRegisteredBorrower
+NotRegisteredLender
+DepositCannotBeZero
+NotEnoughFunds
+NoFundsInDeposit
+BurnAddressProhibited
+HasActiveLoan
+OnlyOwnersAndBorrowersCanAccess
+InvalidInterestRate
+OnlyOwnersAndLendersCanAccess
+```
 
 ### User Stories
 
 - Borrowers - borrowers get registered with the help of owners. They will have deposit accounts. Borrowers have limit in amount they can borrow. When borrower borrows money, the user must have 50% of the money in deposit account. This money will be locked until the user pays back the loan with interest. If user does not return money on time, and lender decides to take money, the locked money of borrower will be transferred to lender. A borrower user can deposit ether into their deposit account at any time, any amount. Once the user reaches targeted amount, he/she makes loan request. When loan request is made deposit money is locked. The user may cancel the loan request(locked money is released) and take out money from deposit.
 - Lenders - they have access to the list of loan requests. They may choose any loan request they like and fulfill that request. When lender fulfills a request, money will be transferred to smart-contract balance and then from smart-contract balance to borrower balance. This process changes status of loan request and it permanently locks the deposit balance of borrower. Once loan request is fulfilled, borrower can not cancel it and take locked money, instead, borrower is supposed to pay back his/her debt with agreed interest rate.
 - Smart-contract designers - there are multiple owner users. Owner type of user can add borrwers, lenders to the system. Call payout method to take profit ethers from smart-contract balance. Profit ethers will be collected from each successfull payback of debt with interest by borrower. For example, a borrower borrowed 2 ethers putting into 1 ether as a warranty deposit for 1 month with 10% interest rate. After a month he returns 2.2 ethers, and gets his deposited 1 ether back. Lender made 0.18 ethers profit(9%), and 0.02 ehthers(1%) goes to smart-contract profit balance.
-  TODO
+  
 
 #
 
@@ -76,19 +78,19 @@ TODO
 
 ### Project Description
 
-TODO
+**TODO**
 
 ### Overview
 
-TODO
+Our smart-contract based solution on Ethereum blockchain enables parties to lend/borrow money without third-party(banks). The system makes profit out of each successful borrow-return process after facilitating simple escrow like service for lenders and borrowers.
 
 ### Data
 
-TODO
+**TODO**
 
 ### Functions
 
-TODO
+**TODO**
 
 ### System Diagram
 
