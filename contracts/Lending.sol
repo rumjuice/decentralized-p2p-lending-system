@@ -18,10 +18,14 @@ error OnlyOwnersAndLendersCanAccess();
 contract Lending {
     //#region State variables
     uint8 public interestRate;
+    // Keep balance amount of smart contract (profit)
+    uint256 private balanceAmountOfSmartContractProfit;
     enum LoanStatus {
         NEW,
         ON_LOAN,
-        PAID
+        PAID,
+        CANCELED,
+        CLOSED_BY_LENDER
     }
     struct LoanRequest {
         address lender;
@@ -43,6 +47,8 @@ contract Lending {
     mapping(address => uint256) private borrowerLoanRequest;
     mapping(address => uint256) private lendersInvestment;
     mapping(address => bool) private lenders;
+    // mapping of borrower address to credit score
+    mapping(address => uint8) private borrowerCreditScores;
 
     mapping(address => bool) private mutex;
 
@@ -165,6 +171,7 @@ contract Lending {
         hasEnoughBalance
         hasNoActiveLoan
     {
+        require(msg.value <= (borrowerCreditScores[msg.sender] + 1) * 1 ether, "Your deposit must equal or less than (your credit score + 1) * 1 ether");
         deposits[msg.sender] += msg.value;
     }
 
@@ -192,16 +199,31 @@ contract Lending {
         hasNotZeroDepositBalance
         hasNoActiveLoan
     {
-        // TODO check credit score for max amount
-        // uint256 _maxAmount = creditScore <= 1 ? 0.5 ether : deposits[msg.sender] * 2;
+        // Checking the credit score to define the max amount for the deposit.
+        // ***
+        // Instead of giving power of unlimited depositing to borrowers,
+        // we can extend credit levels up to 10 or more.
+        // ***
+        // 0 level credit score limit is 1 Eth.
+        // 1 level credit score limit is 2 Eth.
+        // 2 level credit score limit is 3 Eth.
+        uint256 _maxAmount;
+        uint8 creditlevel = borrowerCreditScores[msg.sender];
+        if (creditlevel==0) {
+            _maxAmount= 1;
+        } else if (creditlevel==1) {
+            _maxAmount= 2;
+        } else if (creditlevel==2) {
+            _maxAmount= 2;
+        }         
 
         // create loan object
         loanRequests.push(
             LoanRequest({
                 lender: address(0),
-                amount: deposits[msg.sender] * 2,
+                amount: _maxAmount,
                 interestRate: interestRate,
-                creditScore: 1,
+                creditScore: borrowerCreditScores[msg.sender],
                 status: LoanStatus.NEW
             })
         );
@@ -254,10 +276,46 @@ contract Lending {
         uint256 borrowerDeposit = deposits[_borrower];
         uint256 fee = Utils.percentage(_borrowedAmount, 1);
         if (fee > borrowerDeposit) {
+            balanceAmountOfSmartContractProfit += borrowerDeposit;
             deposits[_borrower] = 0;
         } else {
             deposits[_borrower] = borrowerDeposit - fee;
+            balanceAmountOfSmartContractProfit += fee;
         }
+    }
+
+    // Finding the borrower amount field in the loan request array through their address.
+    function findBorrowerAmountInLoanRequests() internal view returns (uint256) {
+        return loanRequests[borrowerLoanRequest[msg.sender]].amount;
+        // description:
+        //uint256 _index = borrowerLoanRequest[msg.sender];
+        //uint256 _amount = loanRequests[_index].amount;
+        //return _amount;
+    }
+
+    // The borrower pays the debt.
+    function borrowerPaysDebt() external payable onlyBorrowers returns (bool){
+        // Checking if the borrower has an active loan (status == ON_LOAN)
+        uint _index=borrowerLoanRequest[msg.sender];
+        require(loanRequests[_index].status == LoanStatus.ON_LOAN , "You have no active loan");
+        uint256 debtAmount = findBorrowerAmountInLoanRequests();  
+        uint256 returnPaybackAmount = debtAmount + ((debtAmount * interestRate) / 100);
+        // Check if the value sent by the borrower is equal to their (his/her) loan amount.
+        require(msg.value == returnPaybackAmount * 1 ether, "Your payback amount is not correct!");
+        // Finding the lender address associated with this borrower
+        // in order to pay the debt to the lender 
+        address payable LenderAddressAssociatedWithThisBorrower = payable(loanRequests[borrowerLoanRequest[msg.sender]].lender);
+        // Paying back to the lender.
+        LenderAddressAssociatedWithThisBorrower.transfer(returnPaybackAmount * 1 ether);
+        // Updating loan status to PAID.
+        loanRequests[_index].status == LoanStatus.PAID;
+        //Processing of taking the fee amount that will be added to the smart contract balance
+        //and will be deducted from the borrower deposit.       
+         takeProcessingFee(msg.sender, debtAmount);
+         if (borrowerCreditScores[msg.sender]<2){
+                borrowerCreditScores[msg.sender]++;
+         }
+         return true;
     }
 
     //owners and lenders can access the loanRequests list
