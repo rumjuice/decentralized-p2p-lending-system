@@ -29,6 +29,7 @@ contract Lending {
     }
     struct LoanRequest {
         address lender;
+        address borrower;
         uint256 amount;
         uint8 interestRate;
         uint8 creditScore;
@@ -71,7 +72,7 @@ contract Lending {
         interestRate = 10;
         // put dummy loan request for index 0
         // because in borrowerLoanRequest mapping, it will return 0 if the address is not found
-        loanRequests.push(LoanRequest(address(0), 0, 0, 0, LoanStatus.NEW));
+        loanRequests.push(LoanRequest(address(0), address(0), 0, 0, 0, LoanStatus.NEW));
     }
 
     //#region Modifiers
@@ -214,13 +215,14 @@ contract Lending {
         } else if (creditlevel==1) {
             _maxAmount= 2;
         } else if (creditlevel==2) {
-            _maxAmount= 2;
+            _maxAmount= 3;
         }         
 
         // create loan object
         loanRequests.push(
             LoanRequest({
                 lender: address(0),
+                borrower: msg.sender, 
                 amount: _maxAmount,
                 interestRate: interestRate,
                 creditScore: borrowerCreditScores[msg.sender],
@@ -293,7 +295,7 @@ contract Lending {
         //return _amount;
     }
 
-    // The borrower pays the debt.
+    //*** The borrower pays the debt ***
     function borrowerPaysDebt() external payable onlyBorrowers returns (bool){
         // Checking if the borrower has an active loan (status == ON_LOAN)
         uint _index=borrowerLoanRequest[msg.sender];
@@ -317,6 +319,28 @@ contract Lending {
          }
          return true;
     }
+
+
+    //*** Lending function ***
+    //The lender selects one of the loan requests,
+    //and transfers the requested amount to the borrower.
+    //Then,The required updates will be applied.
+    function lending(uint256 _index) external payable onlyLenders returns (bool ) {
+        //Verifying if the selected loan request is valid.
+        require(loanRequests[_index].status == LoanStatus.NEW , "Invalid index");
+        //Verifying the transferred value of the lender according to the borrower's requested loan amount 
+        //(should be equal).
+        require(msg.value == loanRequests[_index].amount * 1 ether, "The amount is not correct!");
+        //Applying the required updates.
+        loanRequests[_index].lender = msg.sender;
+        loanRequests[_index].amount = msg.value;
+        loanRequests[_index].status = LoanStatus.ON_LOAN;
+        //Transferring the requested amount to the borrower by the lender.
+        address payable barrowerAddress = payable(loanRequests[_index].borrower);
+        barrowerAddress.transfer(msg.value * 1 ether);
+        return true;
+    }
+    
 
     //owners and lenders can access the loanRequests list
     function getLoanList()
