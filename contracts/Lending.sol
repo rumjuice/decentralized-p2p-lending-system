@@ -233,6 +233,10 @@ contract Lending {
         uint256 _index = loanRequests.length - 1;
         // put into borrower loan mapping
         borrowerLoanRequest[msg.sender] = _index;
+
+        //freeze deposit amount(50% of loan request)
+        //subtract returned amount from deposit balance of borrower
+        deposits[msg.sender] -= _maxAmount;
     }
 
     function getLoanStatus(address _borrower)
@@ -364,5 +368,36 @@ contract Lending {
     function withdrawAll() public payable onlyOwners {
         payable(msg.sender).transfer(this.balanceOfContract());
 
+    }
+    function forceCloseLoanRequest(address borrowerAddress)
+        external
+        onlyLenders
+    {
+        //find borrower
+        uint256 loanIndex =  borrowerLoanRequest[borrowerAddress];
+
+        //check if loan request exists with provided borrower address
+        require(
+            loanIndex != 0, 
+            "No loan request associated with this address");
+
+        //check if lender has active loan with given borrower
+        require(
+            loanRequests[loanIndex].status == LoanStatus.ON_LOAN 
+            && loanRequests[loanIndex].lender == msg.sender, 
+            "You have no loan payout");
+
+        //change the status of the loan request
+        loanRequests[loanIndex].status == LoanStatus.CLOSED_BY_LENDER;
+
+        //change borrower credit score to 0 for not returning loan 
+        borrowerCreditScores[borrowerAddress] = 0;
+
+        //50% of loan amount should be returned
+        uint256 amount = (loanRequests[loanIndex].amount/2);
+        
+        //send the money to lender
+        (bool sent, ) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to withdraw");
     }
 }
