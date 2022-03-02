@@ -86,7 +86,7 @@ Our smart-contract based solution on Ethereum blockchain enables parties to lend
 
 ### Data
 
-The common datastructure we have used is mapping,struct
+The common datastructure we have used is mapping and struct
 
 Struct
 
@@ -116,6 +116,9 @@ The map storage location is calculated by keccak256 (bytes32(key) + bytes32(posi
 | 14    | getLoanList()                                                   | owners and lenders can access the loanRequests list                               |
 | 15    | setInterestRate(uint8 \_interestRate)                           | owners can set interest rate                                                      |
 | 16    | withdrawAll()                                                   | Withdraw smart contract balance                                                   |
+| 17    | payout()                                                   | payable method for paying back loan                                                   |
+| 18    | forceCloseLoanRequest(address \_borrowerAddress) | by calling this method lender can close the loan transaction and take security deposit of borrower      |
+| 19    | lending(uint256 _index) | payable method, lender sends index of loan request in the list and sends necessary amount to fulfill the loan request      |
 
 ### System Diagram
 
