@@ -17,7 +17,7 @@ library Utils {
         pure
         returns (uint256)
     {
-        // Solidity > 0.8 already have built-in overflow checking
+        /// @dev Solidity > 0.8 already have built-in overflow checking
         return (_amount * _percentage) / 100;
     }
 
